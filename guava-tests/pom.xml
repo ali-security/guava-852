@@ -14,6 +14,7 @@
     separate artifact to allow for the testlibs to depend on guava
     itself.
   </description>
+  <packaging>pom</packaging>
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
