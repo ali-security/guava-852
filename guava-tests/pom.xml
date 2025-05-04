@@ -69,6 +69,11 @@
   <build>
     <plugins>
       <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-install-plugin</artifactId>
+      <version>2.5.2</version> <!-- or 2.4, 2.3, etc. -->
+    </plugin>
+      <plugin>
         <groupId>org.mvnsearch</groupId>
         <artifactId>toolchains-maven-plugin</artifactId>
       </plugin>
