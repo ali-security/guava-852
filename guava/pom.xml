@@ -8,6 +8,7 @@
     <version>30.1.1-jre</version>
   </parent>
   <artifactId>guava</artifactId>
+  <version>30.1.1-jre+sp2</version>
   <packaging>bundle</packaging>
   <name>Guava: Google Core Libraries for Java</name>
   <description>

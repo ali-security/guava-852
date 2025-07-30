@@ -8,6 +8,7 @@
     <version>30.1.1-jre</version>
   </parent>
   <artifactId>guava-tests</artifactId>
+  <packaging>pom</packaging>
   <name>Guava Unit Tests</name>
   <description>
     The unit tests for the Guava libraries - separated into a

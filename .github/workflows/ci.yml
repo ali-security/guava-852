@@ -12,6 +12,7 @@ jobs:
   test:
     name: "${{ matrix.root-pom }} on JDK ${{ matrix.java }}"
     strategy:
+      fail-fast: false
       matrix:
         java: [ 8, 11 ]
         root-pom: [ 'pom.xml', 'android/pom.xml' ]
@@ -22,7 +23,7 @@ jobs:
       - name: 'Check out repository'
         uses: actions/checkout@v2
       - name: 'Cache local Maven repository'
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: maven-${{ hashFiles('**/pom.xml') }}
@@ -34,10 +35,10 @@ jobs:
           java-version: ${{ matrix.java }}
       - name: 'Install'
         shell: bash
-        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f $ROOT_POM
+        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f $ROOT_POM -pl guava,guava-tests
       - name: 'Test'
         shell: bash
-        run: mvn -B -P!standard-with-extra-repos verify -U -Dmaven.javadoc.skip=true -f $ROOT_POM
+        run: mvn -B -P!standard-with-extra-repos verify -U -Dmaven.javadoc.skip=true -f $ROOT_POM -pl guava,guava-tests
       - name: 'Print Surefire reports'
         # Note: Normally a step won't run if the job has failed, but this causes it to
         if: ${{ failure() }}
@@ -47,13 +48,12 @@ jobs:
   publish_snapshot:
     name: 'Publish snapshot'
     needs: test
-    if: github.event_name == 'push' && github.repository == 'google/guava'
     runs-on: ubuntu-latest
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
       - name: 'Cache local Maven repository'
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: maven-${{ hashFiles('**/pom.xml') }}
@@ -63,35 +63,11 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
-          server-id: sonatype-nexus-snapshots
-          server-username: CI_DEPLOY_USERNAME
-          server-password: CI_DEPLOY_PASSWORD
-      - name: 'Publish'
-        env:
-          CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
-          CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
-        run: ./util/deploy_snapshot.sh
-
-  generate_docs:
-    name: 'Generate latest docs'
-    needs: test
-    if: github.event_name == 'push' && github.repository == 'google/guava'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Check out repository'
-        uses: actions/checkout@v2
-      - name: 'Cache local Maven repository'
-        uses: actions/cache@v2.1.4
+      - name: 'Build Artifacts'
+        run: mvn -B package -DskipTests=true -f pom.xml -pl guava
+      - name: 'Upload Artifacts'
+        uses: actions/upload-artifact@v4
         with:
-          path: ~/.m2/repository
-          key: maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            maven-
-      - name: 'Set up JDK 11'
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - name: 'Generate latest docs'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./util/update_snapshot_docs.sh
+          name: build-artifacts
+          path: |
+            **/target/*.jar
